@@ -439,7 +439,6 @@ PLATFORMS
   arm-linux-musl
   arm64-darwin
   x86_64-darwin
-  x86_64-linux
   x86_64-linux-gnu
   x86_64-linux-musl
 
@@ -454,6 +453,8 @@ DEPENDENCIES
   faker (~> 3.4)
   importmap-rails
   kamal
+  net-pop
+  net-protocol
   pg (~> 1.1)
   propshaft
   puma (>= 5.0)
