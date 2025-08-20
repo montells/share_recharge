@@ -16,26 +16,49 @@ WORKDIR /rails
 
 # Install base packages
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y curl libjemalloc2 libvips postgresql-client && \
-    rm -rf /var/lib/apt/lists /var/cache/apt/archives
+    apt-get install --no-install-recommends -y \
+    build-essential \
+    chromium \
+    curl \
+    ffmpeg \
+    ffmpegthumbnailer \
+    gettext-base \
+    git-core \
+    jpegoptim \
+    libjemalloc2 \
+    libpq-dev \
+    libssl-dev \
+    libvips \
+    libxml2-dev \
+    watchman \
+    moreutils \
+    postgresql-client \
+    unzip && \
+    rm -rf /var/lib/apt/lists /var/cache/apt/archives /tmp/* && \
+    truncate -s 0 /var/log/*log
 
-# Set production environment
-ENV RAILS_ENV="production" \
-    BUNDLE_DEPLOYMENT="1" \
-    BUNDLE_PATH="/usr/local/bundle" \
-    BUNDLE_WITHOUT="development"
+# Base runtime bundler path
+ENV BUNDLE_PATH="/usr/local/bundle"
 
 # Throw-away build stage to reduce size of final image
 FROM base AS build
 
 # Install packages needed to build gems
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y build-essential git libpq-dev libyaml-dev pkg-config && \
-    rm -rf /var/lib/apt/lists /var/cache/apt/archives
+    apt-get install --no-install-recommends -y \
+    git \
+    make \
+    gcc \
+    libssl-dev \
+    pkg-config \
+    zlib1g-dev && \
+    rm -rf /var/lib/apt/lists /var/cache/apt/archives /tmp/* && \
+    truncate -s 0 /var/log/*log
 
 # Install application gems
 COPY Gemfile Gemfile.lock ./
-RUN bundle install && \
+RUN bundle update net-pop && \
+    bundle install && \
     rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git && \
     bundle exec bootsnap precompile --gemfile
 
@@ -54,6 +77,11 @@ RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
 # Final stage for app image
 FROM base
 
+# Set production environment in the final image only
+ENV RAILS_ENV="production" \
+    BUNDLE_DEPLOYMENT="1" \
+    BUNDLE_WITHOUT="development"
+
 # Copy built artifacts: gems, application
 COPY --from=build "${BUNDLE_PATH}" "${BUNDLE_PATH}"
 COPY --from=build /rails /rails
@@ -69,4 +97,46 @@ ENTRYPOINT ["/rails/bin/docker-entrypoint"]
 
 # Start server via Thruster by default, this can be overwritten at runtime
 EXPOSE 80
+CMD ["./bin/thrust", "./bin/rails", "server"]
+
+# Development stage
+FROM base AS dev
+
+# Install packages needed to build gems (development)
+RUN apt-get update -qq && \
+    apt-get install --no-install-recommends -y \
+    build-essential \
+    git \
+    libpq-dev \
+    make \
+    gcc \
+    libssl-dev \
+    libxml2-dev \
+    libyaml-dev \
+    pkg-config \
+    watchman \
+    zlib1g-dev && \
+    rm -rf /var/lib/apt/lists /var/cache/apt/archives /tmp/* && \
+    truncate -s 0 /var/log/*log
+
+# Install application gems with fix for net-pop dependency issue
+COPY Gemfile Gemfile.lock ./
+RUN bundle update net-pop && \
+    bundle install && \
+    rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git
+
+# Copy application code
+COPY . .
+
+# Development environment
+ENV RAILS_ENV="development"
+
+# Expose dev port
+EXPOSE 3000
+
+# Entrypoint prepares db when running server
+ENTRYPOINT ["/rails/bin/docker-entrypoint"]
+
+# Default dev command
+# CMD ["bin/rails", "server", "-b", "0.0.0.0", "-p", "3000"]
 CMD ["./bin/thrust", "./bin/rails", "server"]

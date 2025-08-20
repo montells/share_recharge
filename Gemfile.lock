@@ -453,8 +453,8 @@ DEPENDENCIES
   faker (~> 3.4)
   importmap-rails
   kamal
-  net-pop
-  net-protocol
+  net-pop (~> 0.1.2)
+  net-protocol (~> 0.2.2)
   pg (~> 1.1)
   propshaft
   puma (>= 5.0)

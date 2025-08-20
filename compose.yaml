@@ -1,0 +1,70 @@
+name: share_recharge
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=share_recharge_development
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+      args:
+        RUBY_VERSION: 3.3.3
+    environment:
+      - RAILS_ENV=development
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/share_recharge_development
+      - BUNDLE_WITHOUT=
+      - SECRET_KEY_BASE=dummy
+    volumes:
+      - .:/rails:cached
+      - bundle-cache:/usr/local/bundle
+      - rails-tmp:/rails/tmp
+      - rails-storage:/rails/storage
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["bin/rails", "server", "-b", "0.0.0.0", "-p", "3000"]
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+  css:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+      args:
+        RUBY_VERSION: 3.3.3
+    environment:
+      - RAILS_ENV=development
+      - BUNDLE_WITHOUT=
+    volumes:
+      - .:/rails:cached
+      - bundle-cache:/usr/local/bundle
+      - rails-tmp:/rails/tmp
+    command: ["bin/rails", "tailwindcss:watch"]
+    depends_on:
+      - web
+    tty: true
+    stdin_open: true
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  bundle-cache:
+  rails-tmp:
+  rails-storage:
