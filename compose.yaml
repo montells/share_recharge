@@ -16,6 +16,11 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1g"
+        max-file: "1"
 
   web:
     build:
@@ -41,6 +46,11 @@ services:
     ports:
       - "3000:3000"
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1g"
+        max-file: "1"
 
   css:
     build:
@@ -62,6 +72,11 @@ services:
     tty: true
     stdin_open: true
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1g"
+        max-file: "1"
 
 volumes:
   postgres-data:
