@@ -67,7 +67,7 @@ gem "faker", "~> 3.4", :groups => [:development, :test]
 
 gem "database_cleaner-active_record", "~> 2.0", :groups => [:development, :test]
 
-gem "cucumber-rails", "~> 3.1", :groups => [:development, :test], :require => false
+gem "cucumber-rails", "~> 4.0", :groups => [:development, :test], :require => false
 
 gem "capybara", "~> 3.40", :groups => [:development, :test]
 
