@@ -71,4 +71,4 @@ gem "cucumber-rails", "~> 3.1", :groups => [:development, :test], :require => fa
 
 gem "capybara", "~> 3.40", :groups => [:development, :test]
 
-gem "selenium-webdriver", "~> 4.24", :groups => [:development, :test]
+gem "selenium-webdriver", "~> 4.38", :groups => [:development, :test]
